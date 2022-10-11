@@ -11,6 +11,8 @@
 from chrisapp.base import ChrisApp
 import csv
 import json
+import os
+import glob
 
 Gstr_title = r"""
                  _____ _                 
@@ -114,6 +116,20 @@ class Csv2json(ChrisApp):
         Define the CLI arguments accepted by this plugin app.
         Use self.add_argument to specify a new app argument.
         """
+        
+        self.add_argument(  '--inputFileFilter','-f',
+                            dest         = 'inputFileFilter',
+                            type         = str,
+                            optional     = True,
+                            help         = 'Input file filter',
+                            default      = '**/*.csv')
+                            
+        self.add_argument(  '--outputFileStem','-o',
+                            dest         = 'outputFileStem',
+                            type         = str,
+                            optional     = True,
+                            help         = 'Output JSON file stem (no extension)',
+                            default      = 'csv2jsonoutput')
 
     def run(self, options):
         """
@@ -129,9 +145,24 @@ class Csv2json(ChrisApp):
             print("%20s: %-40s" % (k, v))
         print("")
         
+        str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
+
+        l_datapath = glob.glob(str_glob, recursive=True)
         
-        # Call the make_json function
-        self.make_json(csvFilePath, jsonFilePath)
+        
+        if len(l_datapath) > 0:
+
+            csvFilePath =l_datapath[0]
+            
+            print(f"Reading file from {csvFilePath}")
+        
+            jsonFilePath = os.path.join(options.outputdir,options.outputFileStem + ".json")
+            # Call the make_json function
+            self.make_json(csvFilePath, jsonFilePath)
+            
+            print(f"Saving file at {jsonFilePath}")
+        else:
+            print(f"No file matching the filter {options.inputFileFilter} exists in the input directory")
 
     def show_man_page(self):
         """
