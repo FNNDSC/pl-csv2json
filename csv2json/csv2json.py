@@ -34,6 +34,8 @@ Gstr_synopsis = """
     SYNOPSIS
 
         docker run --rm fnndsc/pl-csv2json csv2json                     \\
+            [-f| --inputFileFilter <inputFileFilter>]                   \\
+            [-o| --outputFileStem <outputFileStem>]                     \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -58,7 +60,13 @@ Gstr_synopsis = """
         `csv2json` ...
 
     ARGS
-
+        [-f| --inputFileFilter <inputFileFilter>]
+        A glob pattern string, default is "**/*.csv", representing the input
+        file pattern to analyze.
+        
+        [-o| --outputFileStem <outputFileStem>]
+        The name of the output JSON file to be created (without the extension).
+        
         [-h] [--help]
         If specified, show help message and exit.
         

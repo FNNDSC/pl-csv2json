@@ -34,6 +34,8 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-csv2json csv2json
+        [-f| --inputFileFilter <inputFileFilter>]                                 
+        [-o| --outputFileStem <outputFileStem>]                                    
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -46,7 +48,14 @@ Arguments
 ~~~~~~~~~
 
 .. code::
-
+    
+    [-f| --inputFileFilter <inputFileFilter>]
+    A glob pattern string, default is "**/*.csv", representing the input
+    file pattern to analyze.
+        
+    [-o| --outputFileStem <outputFileStem>]
+    The name of the output JSON file to be created (without the extension).
+    
     [-h] [--help]
     If specified, show help message and exit.
     
