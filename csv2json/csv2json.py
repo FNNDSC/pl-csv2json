@@ -131,6 +131,12 @@ class Csv2json(ChrisApp):
                             optional     = True,
                             help         = 'Input file filter',
                             default      = '**/*.csv')
+        self.add_argument(  '--tagFileFilter','-t',
+                            dest         = 'tagFileFilter',
+                            type         = str,
+                            optional     = True,
+                            help         = 'dicom tag file filter',
+                            default      = '**/*.txt')
                             
         self.add_argument(  '--outputFileStem','-o',
                             dest         = 'outputFileStem',
@@ -152,6 +158,28 @@ class Csv2json(ChrisApp):
         for k,v in d_options.items():
             print("%20s: %-40s" % (k, v))
         print("")
+        tags_data = {}
+        
+        txtstr_glob = '%s/%s' % (options.inputdir,options.tagFileFilter)
+
+        l_txtdatapath = glob.glob(txtstr_glob, recursive=True)
+        
+        for txtdatapath in l_txtdatapath:
+            dim = ""
+            id = ""
+            f = open(txtdatapath)
+            lines = f.readlines()
+            for line in lines:
+                line = line.replace('\n','')
+                line = line.replace("'","")
+                if line.find("Field of View Dimension") != -1:
+                    dim = line.split(':')[1]
+                if line.find("Instance Number") != -1:
+                    id = line.split(':')[1]
+                    id = id.replace(" ","")
+            f.close()
+            tags_data[id] = dim
+        
         
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
 
@@ -166,7 +194,7 @@ class Csv2json(ChrisApp):
         
             jsonFilePath = os.path.join(options.outputdir,options.outputFileStem + ".json")
             # Call the make_json function
-            self.make_json(csvFilePath, jsonFilePath)
+            self.make_json(csvFilePath, jsonFilePath,tags_data)
             
             print(f"Saving file at {jsonFilePath}")
         else:
@@ -178,7 +206,7 @@ class Csv2json(ChrisApp):
         """
         print(Gstr_synopsis)
         
-    def make_json(self,csvFilePath, jsonFilePath):
+    def make_json(self,csvFilePath, jsonFilePath, tags_data):
         # create a dictionary
         data = {}
      
@@ -212,11 +240,26 @@ class Csv2json(ChrisApp):
                 leftBottomLeg = {'leftBottomLeg':{'start':'leftKnee', 'end':'leftAnkle'}}
                 rightTopLeg = {'rightTopLeg':{'start':'rightFemurHead', 'end':'rightKnee'}}
                 rightBottomLeg = {'rightBottomLeg':{'start':'rightKnee', 'end':'rightAnkle'}}
-            
+                
+                height = 0
+                width = 0
+                for tagKey in tags_data.keys():
+                    if tagKey in key:      
+                        dimension = tags_data[tagKey]
+                        dimension = dimension.replace('[','')
+                        dimension = dimension.replace(']','')
+                        dimension = dimension.replace(' ','')
+
+                        height = dimension.split(',')[0]
+                        width = dimension.split(',')[1]
+                        
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
-                     'drawLine':[leftTopLeg,leftBottomLeg,rightTopLeg,rightBottomLeg],
-                     'measureLine':['leftTopLeg','leftBottomLeg','rightTopLeg','rightBottomLeg']}
+                     'drawXLine':[leftTopLeg,leftBottomLeg,rightTopLeg,rightBottomLeg],
+                     'measureXDist':['leftTopLeg','leftBottomLeg','rightTopLeg','rightBottomLeg'],
+                     'origHeight':int(height),
+                     'origWidth': int(width),
+                     'unit' : 'mm'}
                         
                 data[key] = value
  
