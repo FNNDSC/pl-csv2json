@@ -167,6 +167,8 @@ class Csv2json(ChrisApp):
         for txtdatapath in l_txtdatapath:
             dim = ""
             id = ""
+            p_id = ""
+            name = ""
             f = open(txtdatapath)
             lines = f.readlines()
             for line in lines:
@@ -177,8 +179,13 @@ class Csv2json(ChrisApp):
                 if line.find("Instance Number") != -1:
                     id = line.split(':')[1]
                     id = id.replace(" ","")
+                if line.find("Patient ID") != -1:
+                    p_id = line.split(':')[1]
+                if line.find("Patients Name") != -1:
+                    name = line.split(':')[1]
+
             f.close()
-            tags_data[id] = dim
+            tags_data[id] = (dim,p_id,name)
         
         
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
@@ -236,30 +243,37 @@ class Csv2json(ChrisApp):
                 rightAnkle ={'rightAnkle': {'x':rows[11],'y':rows[12]}}
             
                 # All connecting lines
-                leftTopLeg = {'leftTopLeg':{'start':'leftFemurHead', 'end':'leftKnee'}}
-                leftBottomLeg = {'leftBottomLeg':{'start':'leftKnee', 'end':'leftAnkle'}}
-                rightTopLeg = {'rightTopLeg':{'start':'rightFemurHead', 'end':'rightKnee'}}
-                rightBottomLeg = {'rightBottomLeg':{'start':'rightKnee', 'end':'rightAnkle'}}
+                leftFemur = {'Left femur':{'start':'leftFemurHead', 'end':'leftKnee'}}
+                leftTibia = {'Left tibia':{'start':'leftKnee', 'end':'leftAnkle'}}
+                rightFemur = {'Right femur':{'start':'rightFemurHead', 'end':'rightKnee'}}
+                rightTibia = {'Right tibia':{'start':'rightKnee', 'end':'rightAnkle'}}
                 
                 height = 0
                 width = 0
+                patienId = ""
+                patientName = ""
                 for tagKey in tags_data.keys():
                     if tagKey in key:      
-                        dimension = tags_data[tagKey]
+                        dimension = tags_data[tagKey][0]
+                        patientId = tags_data[tagKey][1]
+                        patientName = tags_data[tagKey][2]
                         dimension = dimension.replace('[','')
                         dimension = dimension.replace(']','')
                         dimension = dimension.replace(' ','')
 
                         height = dimension.split(',')[0]
                         width = dimension.split(',')[1]
+                
+                info = {"Patient ID": patientId, "Patient Name": patientName}
                         
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
-                     'drawXLine':[leftTopLeg,leftBottomLeg,rightTopLeg,rightBottomLeg],
-                     'measureXDist':['leftTopLeg','leftBottomLeg','rightTopLeg','rightBottomLeg'],
+                     'drawXLine':[leftFemur,leftTibia,rightFemur,rightTibia],
+                     'measureXDist':['Left femur','Left tibia','Right femur','Right tibia'],
                      'origHeight':int(height),
                      'origWidth': int(width),
-                     'unit' : 'mm'}
+                     'unit' : 'mm',
+                     'info' : info}
                         
                 data[key] = value
  
