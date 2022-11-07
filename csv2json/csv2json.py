@@ -169,6 +169,8 @@ class Csv2json(ChrisApp):
             id = ""
             p_id = ""
             name = ""
+            studyDate = ""
+            age = ""
             f = open(txtdatapath)
             lines = f.readlines()
             for line in lines:
@@ -183,9 +185,14 @@ class Csv2json(ChrisApp):
                     p_id = line.split(':')[1]
                 if line.find("Patients Name") != -1:
                     name = line.split(':')[1]
+                if line.find("Patients Age") != -1:
+                    age = line.split(':')[1]
+                if line.find("Study Date") != -1:
+                    studyDate = line.split(':')[1]
+
 
             f.close()
-            tags_data[id] = (dim,p_id,name)
+            tags_data[id] = (dim,p_id,name,studyDate,age)
         
         
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
@@ -252,11 +259,15 @@ class Csv2json(ChrisApp):
                 width = 0
                 patienId = ""
                 patientName = ""
+                age = ""
+                studyDate = ""
                 for tagKey in tags_data.keys():
                     if tagKey in key:      
                         dimension = tags_data[tagKey][0]
                         patientId = tags_data[tagKey][1]
                         patientName = tags_data[tagKey][2]
+                        studyDate = tags_data[tagKey][3]
+                        age = tags_data[tagKey][4]
                         dimension = dimension.replace('[','')
                         dimension = dimension.replace(']','')
                         dimension = dimension.replace(' ','')
@@ -264,7 +275,7 @@ class Csv2json(ChrisApp):
                         height = dimension.split(',')[0]
                         width = dimension.split(',')[1]
                 
-                info = {"Patient ID": patientId, "Patient Name": patientName}
+                info = {"Patient ID": patientId, "Patient Name": patientName, "Patient Age": age, "Study Date": studyDate}
                         
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
