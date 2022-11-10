@@ -13,6 +13,7 @@ import csv
 import json
 import os
 import glob
+import pydicom as dicom
 
 Gstr_title = r"""
                  _____ _                 
@@ -136,7 +137,7 @@ class Csv2json(ChrisApp):
                             type         = str,
                             optional     = True,
                             help         = 'dicom tag file filter',
-                            default      = '**/*.txt')
+                            default      = '**/*.dcm')
                             
         self.add_argument(  '--outputFileStem','-o',
                             dest         = 'outputFileStem',
@@ -144,6 +145,13 @@ class Csv2json(ChrisApp):
                             optional     = True,
                             help         = 'Output JSON file stem (no extension)',
                             default      = 'csv2jsonoutput')
+                            
+        self.add_argument(  '--addTags','-a',
+                            dest         = 'addTags',
+                            type         = str,
+                            optional     = True,
+                            help         = 'comma seprated tags to be included as info',
+                            default      = 'PatientID')
 
     def run(self, options):
         """
@@ -158,46 +166,16 @@ class Csv2json(ChrisApp):
         for k,v in d_options.items():
             print("%20s: %-40s" % (k, v))
         print("")
-        tags_data = {}
-        
-        txtstr_glob = '%s/%s' % (options.inputdir,options.tagFileFilter)
 
-        l_txtdatapath = glob.glob(txtstr_glob, recursive=True)
         
-        for txtdatapath in l_txtdatapath:
-            dim = ""
-            id = ""
-            p_id = ""
-            name = ""
-            studyDate = ""
-            age = ""
-            f = open(txtdatapath)
-            lines = f.readlines()
-            for line in lines:
-                line = line.replace('\n','')
-                line = line.replace("'","")
-                if line.find("Field of View Dimension") != -1:
-                    dim = line.split(':')[1]
-                if line.find("Instance Number") != -1:
-                    id = line.split(':')[1]
-                    id = id.replace(" ","")
-                if line.find("Patient ID") != -1:
-                    p_id = line.split(':')[1]
-                if line.find("Patients Name") != -1:
-                    name = line.split(':')[1]
-                if line.find("Patients Age") != -1:
-                    age = line.split(':')[1]
-                if line.find("Study Date") != -1:
-                    studyDate = line.split(':')[1]
-
-
-            f.close()
-            tags_data[id] = (dim,p_id,name,studyDate,age)
+        dcm_str_glob = '%s/%s' % (options.inputdir,options.tagFileFilter)
+        l_dcm_datapath = glob.glob(dcm_str_glob, recursive=True)
         
-        
+            
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
-
         l_datapath = glob.glob(str_glob, recursive=True)
+        
+        tags = options.addTags.split(',')
         
         
         if len(l_datapath) > 0:
@@ -208,7 +186,7 @@ class Csv2json(ChrisApp):
         
             jsonFilePath = os.path.join(options.outputdir,options.outputFileStem + ".json")
             # Call the make_json function
-            self.make_json(csvFilePath, jsonFilePath,tags_data)
+            self.make_json(csvFilePath, jsonFilePath,l_dcm_datapath,tags)
             
             print(f"Saving file at {jsonFilePath}")
         else:
@@ -220,7 +198,7 @@ class Csv2json(ChrisApp):
         """
         print(Gstr_synopsis)
         
-    def make_json(self,csvFilePath, jsonFilePath, tags_data):
+    def make_json(self,csvFilePath, jsonFilePath, dcm_file_list,tags):
         # create a dictionary
         data = {}
      
@@ -255,27 +233,21 @@ class Csv2json(ChrisApp):
                 rightFemur = {'Right femur':{'start':'rightFemurHead', 'end':'rightKnee'}}
                 rightTibia = {'Right tibia':{'start':'rightKnee', 'end':'rightAnkle'}}
                 
+                dcm_image = {}
+                for dcm_file_path in dcm_file_list:
+                    if key in dcm_file_path:
+                        dcm_image = dicom.dcmread(dcm_file_path)
+                info = {}        
+                for tag in tags:
+                    info[tag.strip()] = str(dcm_image[tag.strip()].value)
+                    
                 height = 0
                 width = 0
-                patienId = ""
-                patientName = ""
-                age = ""
-                studyDate = ""
-                for tagKey in tags_data.keys():
-                    if tagKey in key:      
-                        dimension = tags_data[tagKey][0]
-                        patientId = tags_data[tagKey][1]
-                        patientName = tags_data[tagKey][2]
-                        studyDate = tags_data[tagKey][3]
-                        age = tags_data[tagKey][4]
-                        dimension = dimension.replace('[','')
-                        dimension = dimension.replace(']','')
-                        dimension = dimension.replace(' ','')
-
-                        height = dimension.split(',')[0]
-                        width = dimension.split(',')[1]
+                dimension = dcm_image.FieldOfViewDimensions
+                height = dimension[0]
+                width = dimension[1]
                 
-                info = {"Patient ID": patientId, "Patient Name": patientName, "Patient Age": age, "Study Date": studyDate}
+                
                         
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
