@@ -239,13 +239,21 @@ class Csv2json(ChrisApp):
                         dcm_image = dicom.dcmread(dcm_file_path)
                 info = {}        
                 for tag in tags:
-                    info[tag.strip()] = str(dcm_image[tag.strip()].value)
+                    try:
+                        info[tag.strip()] = str(dcm_image[tag.strip()].value)
+                    except KeyError:
+                        print(f"\nWARNING: {tag} does not exist for {key}.")
+                    
                     
                 height = 0
                 width = 0
-                dimension = dcm_image.FieldOfViewDimensions
-                height = dimension[0]
-                width = dimension[1]
+                
+                try:               
+                    dimension = dcm_image.FieldOfViewDimensions
+                    height = dimension[0]
+                    width = dimension[1]
+                except:
+                    print(f"\nWARNING: Original dimension does not exist for {key}.")
                 
                 
                         
