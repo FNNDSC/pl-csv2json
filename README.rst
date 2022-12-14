@@ -34,10 +34,17 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-csv2json csv2json
+<<<<<<< HEAD
         [-f| --inputFileFilter <inputFileFilter>]                                 
         [-t|--tagFileFilter <tagFileFilter>]                        
         [-o| --outputFileStem <outputFileStem>]                     
         [-a|--addTags <commaSeparatedTags>]                                    
+=======
+        [-f| --inputFileFilter <inputFileFilter>]  
+        [-t|--tagFileFilter <tagFileFilter>]                               
+        [-o| --outputFileStem <outputFileStem>]  
+        [-a|--addTags <commaSeparatedTagNames>]                                   
+>>>>>>> 543abd67afa19e8e56e18c432beda3792d8c2eba
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -54,6 +61,10 @@ Arguments
     [-f| --inputFileFilter <inputFileFilter>]
     A glob pattern string, default is "**/*.csv", representing the input
     file pattern to analyze.
+    
+    [-t|--tagFileFilter <tagFileFilter>]
+    A glob pattern string, default is "**/*.dcm", representing the input tag
+    file pattern to analyze.
         
     [-t|--tagFileFilter <tagFileFilter>]
     A glob pattern string, default is "**/*.dcm", representing the input
@@ -65,6 +76,9 @@ Arguments
     [-a|--addTags <commaSeparatedTags>]
     A comma separated string conatining the list of tags to add in the info section
     of the output JSON. The default included tag is 'PatientID'
+    
+    [-a|--addTags <commaSeparatedTagNames>]
+    A comma seprated string of tags to be included as info.
     
     [-h] [--help]
     If specified, show help message and exit.

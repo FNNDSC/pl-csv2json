@@ -38,7 +38,7 @@ Gstr_synopsis = """
             [-f| --inputFileFilter <inputFileFilter>]                   \\
             [-t|--tagFileFilter <tagFileFilter>]                        \\
             [-o| --outputFileStem <outputFileStem>]                     \\
-            [-a|--addTags <commaSeparatedTags>]                         \\
+            [-a|--addTags <commaSeparatedTagNames>]                     \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -68,6 +68,7 @@ Gstr_synopsis = """
         file pattern to analyze.
         
         [-t|--tagFileFilter <tagFileFilter>]
+
         A glob pattern string, default is "**/*.dcm", representing the input
         dicom file pattern to analyze.
         
@@ -78,6 +79,9 @@ Gstr_synopsis = """
         A comma separated string conatining the list of tags to add in the info section
         of the output JSON. The default included tag is 'PatientID'
         
+        
+        [-a|--addTags <commaSeparatedTagNames>]
+        A comma seprated string of tags to be included as info.
         
         [-h] [--help]
         If specified, show help message and exit.
