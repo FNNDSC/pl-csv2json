@@ -35,7 +35,9 @@ Usage
 
     docker run --rm fnndsc/pl-csv2json csv2json
         [-f| --inputFileFilter <inputFileFilter>]                                 
-        [-o| --outputFileStem <outputFileStem>]                                    
+        [-t|--tagFileFilter <tagFileFilter>]                        
+        [-o| --outputFileStem <outputFileStem>]                     
+        [-a|--addTags <commaSeparatedTags>]                                    
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -53,8 +55,16 @@ Arguments
     A glob pattern string, default is "**/*.csv", representing the input
     file pattern to analyze.
         
+    [-t|--tagFileFilter <tagFileFilter>]
+    A glob pattern string, default is "**/*.dcm", representing the input
+    dicom file pattern to analyze.
+        
     [-o| --outputFileStem <outputFileStem>]
     The name of the output JSON file to be created (without the extension).
+                
+    [-a|--addTags <commaSeparatedTags>]
+    A comma separated string conatining the list of tags to add in the info section
+    of the output JSON. The default included tag is 'PatientID'
     
     [-h] [--help]
     If specified, show help message and exit.
