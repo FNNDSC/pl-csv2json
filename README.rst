@@ -34,17 +34,11 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-csv2json csv2json
-<<<<<<< HEAD
-        [-f| --inputFileFilter <inputFileFilter>]                                 
-        [-t|--tagFileFilter <tagFileFilter>]                        
-        [-o| --outputFileStem <outputFileStem>]                     
-        [-a|--addTags <commaSeparatedTags>]                                    
-=======
+
         [-f| --inputFileFilter <inputFileFilter>]  
         [-t|--tagFileFilter <tagFileFilter>]                               
         [-o| --outputFileStem <outputFileStem>]  
-        [-a|--addTags <commaSeparatedTagNames>]                                   
->>>>>>> 543abd67afa19e8e56e18c432beda3792d8c2eba
+        [-a|--addTags <commaSeparatedTags>]                                   
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -76,9 +70,6 @@ Arguments
     [-a|--addTags <commaSeparatedTags>]
     A comma separated string conatining the list of tags to add in the info section
     of the output JSON. The default included tag is 'PatientID'
-    
-    [-a|--addTags <commaSeparatedTagNames>]
-    A comma seprated string of tags to be included as info.
     
     [-h] [--help]
     If specified, show help message and exit.
