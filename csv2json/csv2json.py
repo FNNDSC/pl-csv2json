@@ -14,16 +14,31 @@ import json
 import os
 import glob
 import pydicom as dicom
+import  time
+from    loguru                  import logger
+LOG             = logger.debug
+
+logger_format = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> │ "
+    "<level>{level: <5}</level> │ "
+    "<yellow>{name: >28}</yellow>::"
+    "<cyan>{function: <30}</cyan> @"
+    "<cyan>{line: <4}</cyan> ║ "
+    "<level>{message}</level>"
+)
+logger.remove()
+logger.opt(colors = True)
+logger.add(sys.stderr, format=logger_format)
 
 Gstr_title = r"""
-                 _____ _                 
-                / __  (_)                
-  ___ _____   __`' / /'_ ___  ___  _ __  
- / __/ __\ \ / /  / / | / __|/ _ \| '_ \ 
+                 _____ _
+                / __  (_)
+  ___ _____   __`' / /'_ ___  ___  _ __
+ / __/ __\ \ / /  / / | / __|/ _ \| '_ \
 | (__\__ \\ V / ./ /__| \__ \ (_) | | | |
  \___|___/ \_/  \_____/ |___/\___/|_| |_|
-                     _/ |                
-                    |__/                 
+                     _/ |
+                    |__/
 """
 
 Gstr_synopsis = """
@@ -47,15 +62,15 @@ Gstr_synopsis = """
             [-v <level>] [--verbosity <level>]                          \\
             [--version]                                                 \\
             <inputDir>                                                  \\
-            <outputDir> 
+            <outputDir>
 
     BRIEF EXAMPLE
 
         * Bare bones execution
 
-            docker run --rm -u $(id -u)                             \
-                -v $(pwd)/in:/incoming -v $(pwd)/out:/outgoing      \
-                fnndsc/pl-csv2json csv2json                         \
+            docker run --rm -u $(id -u)                                 \\
+                -v $(pwd)/in:/incoming -v $(pwd)/out:/outgoing          \\
+                fnndsc/pl-csv2json csv2json                             \\
                 /incoming /outgoing
 
     DESCRIPTION
@@ -63,48 +78,43 @@ Gstr_synopsis = """
         `csv2json` ...
 
     ARGS
+
         [-f| --inputFileFilter <inputFileFilter>]
         A glob pattern string, default is "**/*.csv", representing the input
         file pattern to analyze.
-        
-        [-t|--tagFileFilter <tagFileFilter>]
 
+        [-t|--tagFileFilter <tagFileFilter>]
         A glob pattern string, default is "**/*.dcm", representing the input
         dicom file pattern to analyze.
-        
+
         [-o| --outputFileStem <outputFileStem>]
         The name of the output JSON file to be created (without the extension).
-                
+
         [-a|--addTags <commaSeparatedTags>]
         A comma separated string conatining the list of tags to add in the info section
-        of the output JSON. The default included tag is 'PatientID'
-        
-        
-        [-a|--addTags <commaSeparatedTagNames>]
-        A comma seprated string of tags to be included as info.
-        
+        of the output JSON. The default included tag is 'PatientID'.
+
         [-h] [--help]
         If specified, show help message and exit.
-        
+
         [--json]
         If specified, show json representation of app and exit.
-        
+
         [--man]
-        If specified, print (this) man page and exit.
+        If specified, LOG (this) man page and exit.
 
         [--meta]
-        If specified, print plugin meta data and exit.
-        
-        [--savejson <DIR>] 
-        If specified, save json representation file to DIR and exit. 
-        
+        If specified, LOG plugin meta data and exit.
+
+        [--savejson <DIR>]
+        If specified, save json representation file to DIR and exit.
+
         [-v <level>] [--verbosity <level>]
         Verbosity level for app. Not used currently.
-        
-        [--version]
-        If specified, print version number and exit. 
-"""
 
+        [--version]
+        If specified, LOG version number and exit.
+"""
 
 class Csv2json(ChrisApp):
     """
@@ -140,7 +150,7 @@ class Csv2json(ChrisApp):
         Define the CLI arguments accepted by this plugin app.
         Use self.add_argument to specify a new app argument.
         """
-        
+
         self.add_argument(  '--inputFileFilter','-f',
                             dest         = 'inputFileFilter',
                             type         = str,
@@ -153,14 +163,14 @@ class Csv2json(ChrisApp):
                             optional     = True,
                             help         = 'dicom tag file filter',
                             default      = '**/*.dcm')
-                            
+
         self.add_argument(  '--outputFileStem','-o',
                             dest         = 'outputFileStem',
                             type         = str,
                             optional     = True,
                             help         = 'Output JSON file stem (no extension)',
                             default      = 'csv2jsonoutput')
-                            
+
         self.add_argument(  '--addTags','-a',
                             dest         = 'addTags',
                             type         = str,
@@ -168,72 +178,85 @@ class Csv2json(ChrisApp):
                             help         = 'comma seprated tags to be included as info',
                             default      = 'PatientID')
 
+    def preamble_show(self, options) -> None:
+        """
+        Just show some preamble "noise" in the output terminal
+        """
+
+        LOG(Gstr_title)
+        LOG('Version: %s' % self.get_version())
+
+        LOG("plugin arguments...")
+        for k,v in options.__dict__.items():
+             LOG("%25s:  [%s]" % (k, v))
+        LOG("")
+
+        LOG("base environment...")
+        for k,v in os.environ.items():
+             LOG("%25s:  [%s]" % (k, v))
+        LOG("")
+
     def run(self, options):
         """
         Define the code to be run by this plugin app.
         """
-        print(Gstr_title)
-        print('Version: %s' % self.get_version())
-        
-        
-        # Output the space of CLI
-        d_options = vars(options)
-        for k,v in d_options.items():
-            print("%20s: %-40s" % (k, v))
-        print("")
+        st: float = time.time()
+        self.preamble_show(options)
 
-        
         dcm_str_glob = '%s/%s' % (options.inputdir,options.tagFileFilter)
         l_dcm_datapath = glob.glob(dcm_str_glob, recursive=True)
-        
-            
+
+
         str_glob = '%s/%s' % (options.inputdir,options.inputFileFilter)
         l_datapath = glob.glob(str_glob, recursive=True)
-        
+
         tags = options.addTags.split(',')
-        
-        
+
+
         if len(l_datapath) > 0:
 
             csvFilePath =l_datapath[0]
-            
-            print(f"Reading file from {csvFilePath}")
-        
+
+            LOG(f"Reading CSV file from {csvFilePath}")
+
             jsonFilePath = os.path.join(options.outputdir,options.outputFileStem + ".json")
             # Call the make_json function
-            self.make_json(csvFilePath, jsonFilePath,l_dcm_datapath,tags)
-            
-            print(f"Saving file at {jsonFilePath}")
+            self.make_json(csvFilePath, jsonFilePath, l_dcm_datapath,tags)
+
+            LOG(f"Saving JSON file to {jsonFilePath}")
         else:
-            print(f"No file matching the filter {options.inputFileFilter} exists in the input directory")
+            LOG(f"No file matching the filter {options.inputFileFilter} exists in the input directory")
+
+        et: float = time.time()
+        LOG("Execution time: %f seconds." % (et -st))
 
     def show_man_page(self):
         """
-        Print the app's man page.
+        LOG the app's man page.
         """
-        print(Gstr_synopsis)
-        
+        LOG(Gstr_synopsis)
+
     def make_json(self,csvFilePath, jsonFilePath, dcm_file_list,tags):
         # create a dictionary
         data = {}
-     
+
         # Open a csv reader called DictReader
         with open(csvFilePath, encoding='utf-8') as csvf:
             csvReader = csv.reader(csvf)
-         
+
             # Convert each row into a dictionary
             # and add it to data
             for rows in csvReader:
-             
+
                 # let the first column
                 # be the primary key
                 key = rows[0]
-            
+
                 # Convert values from string to
                 # float as these are x-y coordinates
                 for i in range(1,len(rows)):
                     rows[i] = float(rows[i])
-            
+
                 # All landmark points
                 leftFemurHead ={'leftFemurHead': {'x':rows[1],'y':rows[2]}}
                 rightFemurHead ={'rightFemurHead': {'x':rows[3],'y':rows[4]}}
@@ -241,37 +264,37 @@ class Csv2json(ChrisApp):
                 rightKnee ={'rightKnee': {'x':rows[7],'y':rows[8]}}
                 leftAnkle ={'leftAnkle': {'x':rows[9],'y':rows[10]}}
                 rightAnkle ={'rightAnkle': {'x':rows[11],'y':rows[12]}}
-            
+
                 # All connecting lines
                 leftFemur = {'Left femur':{'start':'leftFemurHead', 'end':'leftKnee'}}
                 leftTibia = {'Left tibia':{'start':'leftKnee', 'end':'leftAnkle'}}
                 rightFemur = {'Right femur':{'start':'rightFemurHead', 'end':'rightKnee'}}
                 rightTibia = {'Right tibia':{'start':'rightKnee', 'end':'rightAnkle'}}
-                
+
                 dcm_image = {}
                 for dcm_file_path in dcm_file_list:
                     if key in dcm_file_path:
                         dcm_image = dicom.dcmread(dcm_file_path)
-                info = {}        
+                info = {}
                 for tag in tags:
                     try:
                         info[tag.strip()] = str(dcm_image[tag.strip()].value)
                     except KeyError:
-                        print(f"\nWARNING: {tag} does not exist for {key}.")
-                    
-                    
+                        LOG(f"\nWARNING: {tag} does not exist for {key}.")
+
+
                 height = 0
                 width = 0
-                
-                try:               
+
+                try:
                     dimension = dcm_image.FieldOfViewDimensions
                     height = dimension[0]
                     width = dimension[1]
                 except:
-                    print(f"\nWARNING: Original dimension does not exist for {key}.")
-                
-                
-                        
+                    LOG(f"\nWARNING: Original dimension does not exist for {key}.")
+
+
+
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
                      'drawXLine':[leftFemur,leftTibia,rightFemur,rightTibia],
@@ -280,9 +303,9 @@ class Csv2json(ChrisApp):
                      'origWidth': int(width),
                      'unit' : 'mm',
                      'info' : info}
-                        
+
                 data[key] = value
- 
+
         # Open a json writer, and use the json.dumps()
         # function to dump data
         with open(jsonFilePath, 'w', encoding='utf-8') as jsonf:
