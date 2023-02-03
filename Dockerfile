@@ -32,4 +32,4 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
-CMD ["csv2json", "--help"]
+CMD ["csv2json", "--man"]

@@ -11,7 +11,7 @@
 from chrisapp.base import ChrisApp
 import csv
 import json
-import os
+import os, sys
 import glob
 import pydicom as dicom
 import  time
@@ -75,7 +75,11 @@ Gstr_synopsis = """
 
     DESCRIPTION
 
-        `csv2json` ...
+    `csv2json` is a *ChRIS ds-type* application processes an upstream CSV
+    formatted predition file and generates a more friendly JSON
+    representation. This JSON output is used in many downstream plugins and
+    is interpreted to determine where to place drawing and measurement markers
+    on an image.
 
     ARGS
 
@@ -91,8 +95,8 @@ Gstr_synopsis = """
         The name of the output JSON file to be created (without the extension).
 
         [-a|--addTags <commaSeparatedTags>]
-        A comma separated string conatining the list of tags to add in the info section
-        of the output JSON. The default included tag is 'PatientID'.
+        A comma separated string conatining the list of tags to add in the info
+        section of the output JSON. The default included tag is 'PatientID'.
 
         [-h] [--help]
         If specified, show help message and exit.
