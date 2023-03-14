@@ -15,7 +15,12 @@ import os, sys
 import glob
 import pydicom as dicom
 import  time
-from    loguru                  import logger
+from    loguru              import logger
+from    pftag               import pftag
+from    pflog               import pflog
+
+from    argparse            import Namespace
+from    datetime            import datetime
 LOG             = logger.debug
 
 logger_format = (
@@ -54,6 +59,7 @@ Gstr_synopsis = """
             [-t|--tagFileFilter <tagFileFilter>]                        \\
             [-o| --outputFileStem <outputFileStem>]                     \\
             [-a|--addTags <commaSeparatedTagNames>]                     \\
+            [--pftelDB <DBURLpath>]                                     \\
             [-h] [--help]                                               \\
             [--json]                                                    \\
             [--man]                                                     \\
@@ -97,6 +103,25 @@ Gstr_synopsis = """
         [-a|--addTags <commaSeparatedTags>]
         A comma separated string conatining the list of tags to add in the info
         section of the output JSON. The default included tag is 'PatientID'.
+
+        [--pftelDB <DBURLpath>]
+        If specified, send telemetry logging to the pftel server and the
+        specfied DBpath:
+
+            --pftelDB   <URLpath>/<logObject>/<logCollection>/<logEvent>
+
+        for example
+
+            --pftelDB http://localhost:22223/api/v1/weather/massachusetts/boston
+
+        Indirect parsing of each of the object, collection, event strings is
+        available through `pftag` so any embedded pftag SGML is supported. So
+
+            http://localhost:22223/api/vi/%platform/%timestamp_strmsk|**********_/%name
+
+        would be parsed to, for example:
+
+            http://localhost:22223/api/vi/Linux/2023-03-11/posix
 
         [-h] [--help]
         If specified, show help message and exit.
@@ -181,6 +206,13 @@ class Csv2json(ChrisApp):
                             optional     = True,
                             help         = 'comma seprated tags to be included as info',
                             default      = 'PatientID')
+        self.add_argument(  '--pftelDB',
+                            dest        = 'pftelDB',
+                            default     = '',
+                            type        = str,
+                            optional    = True,
+                            help        = 'optional pftel server DB path'
+                        )
 
     def preamble_show(self, options) -> None:
         """
@@ -200,10 +232,36 @@ class Csv2json(ChrisApp):
              LOG("%25s:  [%s]" % (k, v))
         LOG("")
 
+    def epilogue(self, options:Namespace, dt_start:datetime = None) -> None:
+        """
+        Some epilogue cleanup -- basically determine a delta time
+        between passed epoch and current, and if indicated in CLI
+        pflog this.
+
+        Args:
+            options (Namespace): option space
+            dt_start (datetime): optional start date
+        """
+        tagger:pftag.Pftag  = pftag.Pftag({})
+        dt_end:datetime     = pftag.timestamp_dt(tagger(r'%timestamp')['result'])
+        ft:float            = 0.0
+        if dt_start:
+            ft              = (dt_end - dt_start).total_seconds()
+        if options.pftelDB:
+            options.pftelDB = '/'.join(options.pftelDB.split('/')[:-1] + ['csv-to-json'])
+            d_log:dict      = pflog.pfprint(
+                                options.pftelDB,
+                                f"Shutting down after {ft} seconds.",
+                                appName     = 'pl-csv2json',
+                                execTime    = ft
+                            )
+
     def run(self, options):
         """
         Define the code to be run by this plugin app.
         """
+        tagger:pftag.Pftag  = pftag.Pftag({})
+        dt_start:datetime   = pftag.timestamp_dt(tagger(r'%timestamp')['result'])
         st: float = time.time()
         self.preamble_show(options)
 
@@ -233,6 +291,7 @@ class Csv2json(ChrisApp):
 
         et: float = time.time()
         LOG("Execution time: %f seconds." % (et -st))
+        self.epilogue(options, dt_start)
 
     def show_man_page(self):
         """
