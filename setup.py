@@ -6,7 +6,7 @@ with open(path.join(path.dirname(path.abspath(__file__)), 'README.rst')) as f:
 
 setup(
     name             = 'csv2json',
-    version          = '1.0.8',
+    version          = '1.0.10',
     description      = 'An app to convert CSV generated from pl-lld_inference to a JSON representation',
     long_description = readme,
     author           = 'FNNDSC',
