@@ -17,15 +17,14 @@ pl-csv2json
 Abstract
 --------
 
-An app to convert CSV generated from pl-lld_inference to a JSON representation
+An app to convert CSV predition file generated from `pl-lld_inference` into a more meaningful JSON representation.
 
 
 Description
 -----------
 
 
-``csv2json`` is a *ChRIS ds-type* application that takes in ... as ... files
-and produces ...
+``csv2json`` is a *ChRIS ds-type* application processes an upstream CSV formatted predition file and generates a more friendly JSON representation. This JSON output is used in many downstream plugins and is interpreted to determine where to place drawing and measurement markers on an image.
 
 
 Usage
@@ -34,10 +33,11 @@ Usage
 .. code::
 
     docker run --rm fnndsc/pl-csv2json csv2json
-        [-f| --inputFileFilter <inputFileFilter>]  
-        [-t|--tagFileFilter <tagFileFilter>]                               
-        [-o| --outputFileStem <outputFileStem>]  
-        [-a|--addTags <commaSeparatedTagNames>]                                   
+
+        [-f| --inputFileFilter <inputFileFilter>]
+        [-t|--tagFileFilter <tagFileFilter>]
+        [-o| --outputFileStem <outputFileStem>]
+        [-a|--addTags <commaSeparatedTags>]
         [-h|--help]
         [--json] [--man] [--meta]
         [--savejson <DIR>]
@@ -50,41 +50,46 @@ Arguments
 ~~~~~~~~~
 
 .. code::
-    
+
     [-f| --inputFileFilter <inputFileFilter>]
     A glob pattern string, default is "**/*.csv", representing the input
     file pattern to analyze.
-    
+
     [-t|--tagFileFilter <tagFileFilter>]
     A glob pattern string, default is "**/*.dcm", representing the input tag
     file pattern to analyze.
-        
+
+    [-t|--tagFileFilter <tagFileFilter>]
+    A glob pattern string, default is "**/*.dcm", representing the input
+    dicom file pattern to analyze.
+
     [-o| --outputFileStem <outputFileStem>]
     The name of the output JSON file to be created (without the extension).
-    
-    [-a|--addTags <commaSeparatedTagNames>]
-    A comma seprated string of tags to be included as info.
-    
+
+    [-a|--addTags <commaSeparatedTags>]
+    A comma separated string conatining the list of tags to add in the info section
+    of the output JSON. The default included tag is 'PatientID'.
+
     [-h] [--help]
     If specified, show help message and exit.
-    
+
     [--json]
     If specified, show json representation of app and exit.
-    
+
     [--man]
     If specified, print (this) man page and exit.
 
     [--meta]
     If specified, print plugin meta data and exit.
-    
-    [--savejson <DIR>] 
-    If specified, save json representation file to DIR and exit. 
-    
+
+    [--savejson <DIR>]
+    If specified, save json representation file to DIR and exit.
+
     [-v <level>] [--verbosity <level>]
     Verbosity level for app. Not used currently.
-    
+
     [--version]
-    If specified, print version number and exit. 
+    If specified, print version number and exit.
 
 
 Getting inline help is:
@@ -103,7 +108,7 @@ You need to specify input and output directories using the `-v` flag to `docker 
 
     docker run --rm -u $(id -u)                             \
         -v $(pwd)/in:/incoming -v $(pwd)/out:/outgoing      \
-        fnndsc/pl-csv2json csv2json                        \
+        fnndsc/pl-csv2json csv2json                         \
         /incoming /outgoing
 
 

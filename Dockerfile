@@ -21,7 +21,7 @@
 #   docker run -ti -e HOST_IP=$(ip route | grep -v docker | awk '{if(NF==11) print $9}') --entrypoint /bin/bash local/pl-csv2json
 #
 
-FROM python:3.9.1-slim-buster
+FROM docker.io/python:3.11.0-slim-bullseye
 LABEL maintainer="FNNDSC <dev@babyMRI.org>"
 
 WORKDIR /usr/local/src
@@ -32,4 +32,4 @@ RUN pip install -r requirements.txt
 COPY . .
 RUN pip install .
 
-CMD ["csv2json", "--help"]
+CMD ["csv2json", "--man"]

@@ -163,11 +163,11 @@ class Csv2json(ChrisApp):
                             default      = 'PatientID')
 
         self.add_argument(  '--addDetailTags', '-d',
-                            dest='addDetailTags',
-                            type=str,
-                            optional=True,
-                            help='comma separated tags to be included as details',
-                            default='SeriesDescription')
+                          dest='addDetailTags',
+                          type=str,
+                          optional=True,
+                          help='comma separated tags to be included as details',
+                          default='SeriesDescription')
 
     def run(self, options):
         """
@@ -289,7 +289,7 @@ class Csv2json(ChrisApp):
                      'origWidth': int(width),
                      'unit' : 'mm',
                      'info' : info,
-                     'details' : details }
+                     'details' : details}
                         
                 data[key] = value
  
