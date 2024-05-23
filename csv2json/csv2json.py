@@ -159,8 +159,15 @@ class Csv2json(ChrisApp):
                             dest         = 'addTags',
                             type         = str,
                             optional     = True,
-                            help         = 'comma seprated tags to be included as info',
+                            help         = 'comma separated tags to be included as info',
                             default      = 'PatientID')
+
+        self.add_argument(  '--addDetailTags', '-d',
+                            dest='addDetailTags',
+                            type=str,
+                            optional=True,
+                            help='comma separated tags to be included as details',
+                            default='SeriesDescription')
 
     def run(self, options):
         """
@@ -185,6 +192,7 @@ class Csv2json(ChrisApp):
         l_datapath = glob.glob(str_glob, recursive=True)
         
         tags = options.addTags.split(',')
+        detail_tags = options.addDetailTags.split(',')
         
         
         if len(l_datapath) > 0:
@@ -195,7 +203,7 @@ class Csv2json(ChrisApp):
         
             jsonFilePath = os.path.join(options.outputdir,options.outputFileStem + ".json")
             # Call the make_json function
-            self.make_json(csvFilePath, jsonFilePath,l_dcm_datapath,tags)
+            self.make_json(csvFilePath, jsonFilePath,l_dcm_datapath,tags,detail_tags)
             
             print(f"Saving file at {jsonFilePath}")
         else:
@@ -207,7 +215,7 @@ class Csv2json(ChrisApp):
         """
         print(Gstr_synopsis)
         
-    def make_json(self,csvFilePath, jsonFilePath, dcm_file_list,tags):
+    def make_json(self,csvFilePath, jsonFilePath, dcm_file_list,tags,detail_tags):
         # create a dictionary
         data = {}
      
@@ -252,6 +260,13 @@ class Csv2json(ChrisApp):
                         info[tag.strip()] = str(dcm_image[tag.strip()].value)
                     except KeyError:
                         print(f"\nWARNING: {tag} does not exist for {key}.")
+
+                details = {}
+                for tag in detail_tags:
+                    try:
+                        details[tag.strip()] = str(dcm_image[tag.strip()].value)
+                    except KeyError:
+                        print(f"\nWARNING: {tag} does not exist for {key}.")
                     
                     
                 height = 0
@@ -273,7 +288,8 @@ class Csv2json(ChrisApp):
                      'origHeight':int(height),
                      'origWidth': int(width),
                      'unit' : 'mm',
-                     'info' : info}
+                     'info' : info,
+                     'details' : details }
                         
                 data[key] = value
  
