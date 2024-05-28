@@ -259,6 +259,7 @@ class Csv2json(ChrisApp):
                     try:
                         info[tag.strip()] = str(dcm_image[tag.strip()].value)
                     except KeyError:
+                        info[tag.strip()] = "(no value available)"
                         print(f"\nWARNING: {tag} does not exist for {key}.")
 
                 details = {}
@@ -266,6 +267,7 @@ class Csv2json(ChrisApp):
                     try:
                         details[tag.strip()] = str(dcm_image[tag.strip()].value)
                     except KeyError:
+                        details[tag.strip()] = "(no value available)"
                         print(f"\nWARNING: {tag} does not exist for {key}.")
                     
                     
