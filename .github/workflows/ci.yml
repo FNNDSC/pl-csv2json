@@ -139,11 +139,32 @@ jobs:
       - name: Upload ChRIS Plugin
         id: upload
         if: github.ref_type == 'tag'
-        uses: FNNDSC/upload-chris-plugin@v1
-        with:
-            description_file: /tmp/description.json
-            username: ${{ secrets.CHRISPROJECT_USERNAME }}
-            password: ${{ secrets.CHRISPROJECT_PASSWORD }}
-            chris_url: https://cube.chrisproject.org/api/v1/
-            compute_names: NERC
-
+        run: |
+          auth='${{ secrets.CHRISPROJECT_USERNAME }}:${{ secrets.CHRISPROJECT_PASSWORD }}'
+          admin_url="$(curl -sSf -u "$auth" '${{ inputs.chris_url }}' -H 'Accept: application/json' | jq -r '.collection_links.admin')"
+          chris_url="https://cube.chrisproject.org/api/v1/"
+          compute_names="NERC"
+          if [ "$admin_url" = "null" ]; then
+            echo "::error ::${{ secrets.CHRISPROJECT_USERNAME }} is not an admin for ${{ chris_url }}"
+            exit 1
+          fi
+          
+          set +e
+          res="$(
+            curl -sS -u "$auth" "$admin_url" \
+              -H 'Accept: application/json' \
+              -F fname=@- \
+              -F compute_names='${{ compute_names }}' \
+              < /tmp/description.json
+          )"
+          rc=$?
+          
+          if [ "$rc" != "0" ]; then
+            echo "Description >>>"
+            cat /tmp/description.json
+            echo "Response >>>"
+            echo "$res"
+          
+            echo "::error ::Failed to upload plugin to $admin_url"
+            exit "$rc"
+          fi
