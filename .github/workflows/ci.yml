@@ -147,7 +147,7 @@ jobs:
               cat > $description_file << ENDOFPLUGINJSONDESCRIPTION
               ${{ steps.pluginmeta.outputs.json }}
               ENDOFPLUGINJSONDESCRIPTION
-            description_file: ${{ steps.pluginmeta.outputs.json }}
+            description_file: ${{ description_file }}
             username: ${{ secrets.CHRISPROJECT_USERNAME }}
             password: ${{ secrets.CHRISPROJECT_PASSWORD }}
             chris_url: https://cube.chrisproject.org/api/v1/
