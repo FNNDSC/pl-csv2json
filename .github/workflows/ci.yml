@@ -136,18 +136,22 @@ jobs:
           readme-filepath: ./README.rst
           repository: ${{ steps.determine.outputs.repo }}
 
+      - name: Get plugin info
+        id: plugininfo
+        run: |
+          description_file=$(mktemp --suffix .json)
+          cat > $description_file << ENDOFPLUGINJSONDESCRIPTION
+          ${{ steps.pluginmeta.outputs.json }}
+          ENDOFPLUGINJSONDESCRIPTION
+          echo "::set-output name=description_file::$description_file"
+
       - name: Upload ChRIS Plugin
         id: upload
         if: github.ref_type == 'tag'
         uses: FNNDSC/upload-chris-plugin@v1
         with:
             dock_image: ${{ steps.info.outputs.local_tag }}
-            run: |
-              description_file=$(mktemp --suffix .json)
-              cat > $description_file << ENDOFPLUGINJSONDESCRIPTION
-              ${{ steps.pluginmeta.outputs.json }}
-              ENDOFPLUGINJSONDESCRIPTION
-            description_file: ${{ description_file }}
+            description_file: ${{ steps.plugininfo.outputs.description_file }}
             username: ${{ secrets.CHRISPROJECT_USERNAME }}
             password: ${{ secrets.CHRISPROJECT_PASSWORD }}
             chris_url: https://cube.chrisproject.org/api/v1/
