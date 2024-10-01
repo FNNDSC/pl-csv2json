@@ -141,7 +141,7 @@ jobs:
         if: github.ref_type == 'tag'
         uses: FNNDSC/upload-chris-plugin@v1
         with:
-            descriptor_file: /tmp/description.json
+            description_file: /tmp/description.json
             username: ${{ secrets.CHRISPROJECT_USERNAME }}
             password: ${{ secrets.CHRISPROJECT_PASSWORD }}
             chris_url: https://cube.chrisproject.org/api/v1/
