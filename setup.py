@@ -6,12 +6,12 @@ with open(path.join(path.dirname(path.abspath(__file__)), 'README.rst')) as f:
 
 setup(
     name             = 'csv2json',
-    version          = '1.3.1',
+    version          = '1.3.2',
     description      = 'An app to convert CSV generated from pl-lld_inference to a JSON representation',
     long_description = readme,
     author           = 'FNNDSC',
     author_email     = 'dev@babyMRI.org',
-    url              = 'http://wiki',
+    url              = 'https://github.com/FNNDSC/pl-csv2json#readme',
     packages         = ['csv2json'],
     install_requires = ['chrisapp'],
     test_suite       = 'nose.collector',
