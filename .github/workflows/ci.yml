@@ -154,7 +154,7 @@ jobs:
             curl -sS -u "$auth" "$admin_url" \
               -H 'Accept: application/json' \
               -F fname=@- \
-              -F compute_names='${{ compute_names }}' \
+              -F compute_names=$compute_names \
               < /tmp/description.json
           )"
           rc=$?
