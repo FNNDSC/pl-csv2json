@@ -141,8 +141,8 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           auth='${{ secrets.CHRISPROJECT_USERNAME }}:${{ secrets.CHRISPROJECT_PASSWORD }}'
-          admin_url="$(curl -sSf -u "$auth" '${{ inputs.chris_url }}' -H 'Accept: application/json' | jq -r '.collection_links.admin')"
           chris_url="https://cube.chrisproject.org/api/v1/"
+          admin_url="$(curl -sSf -u "$auth" '${{ chris_url }}' -H 'Accept: application/json' | jq -r '.collection_links.admin')"
           compute_names="NERC"
           if [ "$admin_url" = "null" ]; then
             echo "::error ::${{ secrets.CHRISPROJECT_USERNAME }} is not an admin for ${{ chris_url }}"
