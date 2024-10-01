@@ -135,32 +135,19 @@ jobs:
           readme-filepath: ./README.rst
           repository: ${{ steps.determine.outputs.repo }}
 
-      - name: Upload to ChRIS Store
-        if: "!endsWith(steps.determine.outputs.dock_image, ':latest')"
-        run: |
-          dock_image=${{ steps.determine.outputs.dock_image }}
-          plname="$(sed 's/^.*\///' <<< $GITHUB_REPOSITORY)" && echo "name=$plname"
-          descriptor_file=$(mktemp --suffix .json)
-          cat > $descriptor_file << ENDOFPLUGINJSONDESCRIPTION
-          ${{ steps.pluginmeta.outputs.json }}
-          ENDOFPLUGINJSONDESCRIPTION
-          res=$(
-            curl -s -u "${{ secrets.CHRIS_STORE_USER }}" "https://chrisstore.co/api/v1/plugins/" \
-              -H 'Accept:application/vnd.collection+json' \
-              -F "name=$plname" \
-              -F "dock_image=$dock_image"  \
-              -F "descriptor_file=@$descriptor_file" \
-              -F "public_repo=https://github.com/${{ github.repository }}"
-          )
-          success=$?
-          echo "::debug::$res"
-          if [ "$success" = "0" ]; then
-            href="$(jq -r '.collection.items[0].href' <<< "$res")"
-            echo $href
-            echo "::set-output name=pluginurl::$href"
-          else
-            echo "::error ::Failed upload to ChRIS Store"
-            echo "$res"
-            exit $success
-          fi
+      - name: Upload ChRIS Plugin
+        id: upload
+        if: github.ref_type == 'tag'
+        uses: FNNDSC/upload-chris-plugin@v1
+        with:
+            dock_image: ${{ steps.info.outputs.local_tag }}
+            run: |
+              description_file=$(mktemp --suffix .json)
+              cat > $description_file << ENDOFPLUGINJSONDESCRIPTION
+              ${{ steps.pluginmeta.outputs.json }}
+              ENDOFPLUGINJSONDESCRIPTION
+            username: ${{ secrets.CHRISPROJECT_USERNAME }}
+            password: ${{ secrets.CHRISPROJECT_PASSWORD }}
+            chris_url: https://cube.chrisproject.org/api/v1/
+            compute_names: NERC
 
