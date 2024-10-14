@@ -279,7 +279,11 @@ class Csv2json(ChrisApp):
                     height = dimension[0]
                     width = dimension[1]
                 except:
-                    print(f"\nWARNING: Original dimension does not exist for {key}.")
+                    print(f"\nWARNING: Original dimension does not exist for {key}."
+                          f"\nUsing PixelSpacing for height and width calculation.")
+                    pixel_spacing = dcm_image.PixelSpacing
+                    height = round(pixel_spacing[0] * dcm_image.Rows)
+                    width = round(pixel_spacing[0] * dcm_image.Columns)
                 
                 
                         
