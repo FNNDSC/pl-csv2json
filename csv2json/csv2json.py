@@ -222,15 +222,25 @@ class Csv2json(ChrisApp):
         then PixelSpacing / ImagerPixelSpacing / NominalScannedPixelSpacing
         multiplied by Rows/Columns. Returns (0, 0) if no size info exists.
         """
-        fov = dcm_image.get("FieldOfViewDimensions")
-        if fov and len(fov) >= 2:
+        def as_pair(value):
+            # pydicom returns a scalar for single-valued elements
+            if value is None:
+                return None
+            try:
+                values = list(value)
+            except TypeError:
+                return None
+            return values if len(values) >= 2 else None
+
+        fov = as_pair(dcm_image.get("FieldOfViewDimensions"))
+        if fov:
             return float(fov[0]), float(fov[1])
 
         rows = dcm_image.get("Rows")
         cols = dcm_image.get("Columns")
         for tag in ("PixelSpacing", "ImagerPixelSpacing", "NominalScannedPixelSpacing"):
-            spacing = dcm_image.get(tag)
-            if spacing and len(spacing) >= 2 and rows and cols:
+            spacing = as_pair(dcm_image.get(tag))
+            if spacing and rows and cols:
                 print(f"\nWARNING: Original dimension does not exist for {key}."
                       f"\nUsing {tag} for height and width calculation.")
                 # spacing = [row spacing (vertical), column spacing (horizontal)]
