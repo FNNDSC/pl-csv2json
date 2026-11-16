@@ -215,6 +215,31 @@ class Csv2json(ChrisApp):
         """
         print(Gstr_synopsis)
         
+    @staticmethod
+    def get_dimensions(dcm_image, key):
+        """
+        Return (height, width) of the image in mm. Tries FieldOfViewDimensions,
+        then PixelSpacing / ImagerPixelSpacing / NominalScannedPixelSpacing
+        multiplied by Rows/Columns. Returns (0, 0) if no size info exists.
+        """
+        fov = dcm_image.get("FieldOfViewDimensions")
+        if fov and len(fov) >= 2:
+            return float(fov[0]), float(fov[1])
+
+        rows = dcm_image.get("Rows")
+        cols = dcm_image.get("Columns")
+        for tag in ("PixelSpacing", "ImagerPixelSpacing", "NominalScannedPixelSpacing"):
+            spacing = dcm_image.get(tag)
+            if spacing and len(spacing) >= 2 and rows and cols:
+                print(f"\nWARNING: Original dimension does not exist for {key}."
+                      f"\nUsing {tag} for height and width calculation.")
+                # spacing = [row spacing (vertical), column spacing (horizontal)]
+                return round(float(spacing[0]) * rows), round(float(spacing[1]) * cols)
+
+        print(f"\nWARNING: No dimension or pixel spacing information for {key}."
+              f"\nSetting origHeight and origWidth to 0.")
+        return 0, 0
+
     def make_json(self,csvFilePath, jsonFilePath, dcm_file_list,tags,detail_tags):
         # create a dictionary
         data = {}
@@ -274,19 +299,8 @@ class Csv2json(ChrisApp):
                 height = 0
                 width = 0
                 
-                try:               
-                    dimension = dcm_image.FieldOfViewDimensions
-                    height = dimension[0]
-                    width = dimension[1]
-                except:
-                    print(f"\nWARNING: Original dimension does not exist for {key}."
-                          f"\nUsing PixelSpacing for height and width calculation.")
-                    pixel_spacing = dcm_image.PixelSpacing
-                    height = round(pixel_spacing[0] * dcm_image.Rows)
-                    width = round(pixel_spacing[0] * dcm_image.Columns)
-                
-                
-                        
+                height, width = self.get_dimensions(dcm_image, key)
+
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],
                      'drawXLine':[leftFemur,leftTibia,rightFemur,rightTibia],
