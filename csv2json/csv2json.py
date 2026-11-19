@@ -216,35 +216,67 @@ class Csv2json(ChrisApp):
         print(Gstr_synopsis)
         
     @staticmethod
+    def _positive_pair(value):
+        """
+        Return the first two values of a multi-valued DICOM element as floats,
+        or None if the element is missing, single-valued, malformed, or has a
+        value that is not greater than zero.
+        """
+        if value is None:
+            return None
+        try:
+            # pydicom returns a scalar for single-valued elements
+            values = [float(v) for v in list(value)[:2]]
+        except (TypeError, ValueError):
+            return None
+        if len(values) < 2 or values[0] <= 0 or values[1] <= 0:
+            return None
+        return values
+
+    @staticmethod
     def get_dimensions(dcm_image, key):
         """
-        Return (height, width) of the image in mm. Tries FieldOfViewDimensions,
-        then PixelSpacing / ImagerPixelSpacing / NominalScannedPixelSpacing
-        multiplied by Rows/Columns. Returns (0, 0) if no size info exists.
-        """
-        def as_pair(value):
-            # pydicom returns a scalar for single-valued elements
-            if value is None:
-                return None
-            try:
-                values = list(value)
-            except TypeError:
-                return None
-            return values if len(values) >= 2 else None
+        Return (height, width) of the image in mm, as ints.
 
-        fov = as_pair(dcm_image.get("FieldOfViewDimensions"))
+        Tries FieldOfViewDimensions, then PixelSpacing, ImagerPixelSpacing and
+        NominalScannedPixelSpacing multiplied by Rows/Columns.
+
+        ImagerPixelSpacing is measured at the detector, so it is divided by
+        EstimatedRadiographicMagnificationFactor (0018,1114) when present to
+        give patient-plane sizes. Without that factor the detector-plane value
+        is used, with a warning, because lengths will be overstated.
+
+        Returns (0, 0) if no usable size information exists.
+        """
+        fov = Csv2json._positive_pair(dcm_image.get("FieldOfViewDimensions"))
         if fov:
-            return float(fov[0]), float(fov[1])
+            return round(fov[0]), round(fov[1])
 
         rows = dcm_image.get("Rows")
         cols = dcm_image.get("Columns")
-        for tag in ("PixelSpacing", "ImagerPixelSpacing", "NominalScannedPixelSpacing"):
-            spacing = as_pair(dcm_image.get(tag))
-            if spacing and rows and cols:
+        if rows and cols:
+            for tag in ("PixelSpacing", "ImagerPixelSpacing", "NominalScannedPixelSpacing"):
+                spacing = Csv2json._positive_pair(dcm_image.get(tag))
+                if not spacing:
+                    continue
                 print(f"\nWARNING: Original dimension does not exist for {key}."
                       f"\nUsing {tag} for height and width calculation.")
+                row_spacing, col_spacing = spacing
+                if tag == "ImagerPixelSpacing":
+                    try:
+                        magnification = float(
+                            dcm_image.get("EstimatedRadiographicMagnificationFactor") or 0)
+                    except (TypeError, ValueError):
+                        magnification = 0
+                    if magnification > 0:
+                        row_spacing /= magnification
+                        col_spacing /= magnification
+                    else:
+                        print(f"\nWARNING: EstimatedRadiographicMagnificationFactor does not exist for {key}."
+                              f"\nImagerPixelSpacing is measured at the detector; "
+                              f"lengths may be overstated.")
                 # spacing = [row spacing (vertical), column spacing (horizontal)]
-                return round(float(spacing[0]) * rows), round(float(spacing[1]) * cols)
+                return round(row_spacing * rows), round(col_spacing * cols)
 
         print(f"\nWARNING: No dimension or pixel spacing information for {key}."
               f"\nSetting origHeight and origWidth to 0.")
@@ -289,6 +321,8 @@ class Csv2json(ChrisApp):
                 for dcm_file_path in dcm_file_list:
                     if key in dcm_file_path:
                         dcm_image = dicom.dcmread(dcm_file_path)
+                if not dcm_image:
+                    print(f"\nWARNING: no DICOM found for {key}.")
                 info = {}        
                 for tag in tags:
                     try:
@@ -306,10 +340,10 @@ class Csv2json(ChrisApp):
                         print(f"\nWARNING: {tag} does not exist for {key}.")
                     
                     
-                height = 0
-                width = 0
-                
-                height, width = self.get_dimensions(dcm_image, key)
+                if dcm_image:
+                    height, width = self.get_dimensions(dcm_image, key)
+                else:
+                    height, width = 0, 0
 
                 # All items of the JSON
                 value = {'landmarks' : [leftFemurHead,leftKnee,leftAnkle,rightFemurHead,rightKnee,rightAnkle],

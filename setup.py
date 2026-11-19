@@ -13,7 +13,7 @@ setup(
     author_email     = 'dev@babyMRI.org',
     url              = 'https://github.com/FNNDSC/pl-csv2json#readme',
     packages         = ['csv2json'],
-    install_requires = ['chrisapp'],
+    install_requires = ['chrisapp', 'pydicom'],
     test_suite       = 'nose.collector',
     tests_require    = ['nose'],
     license          = 'MIT',
